@@ -1,8 +1,13 @@
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class DNSQuestion {
-    public String qName; // the dot on the end must be removed before being stored here // not the clients responsibiliy tho
+    public String qName; // the dot on the end must be removed before being stored here
     public int qType;
     public int qClass;
 
+    // for making domain question
     public DNSQuestion(int index, byte[] dnsMessageBytes) {
         // A pointer can't be used in the QNAME field of the question section
         // because there is no prior data in the message that it could point to.
@@ -40,6 +45,15 @@ public class DNSQuestion {
     }
 
     public DNSQuestion(String qName, int qType, int qClass) {
+        if (qType == 12) {
+            String[] octets = qName.split("\\.");
+            List<String> octetList = Arrays.asList(octets);
+            Collections.reverse(octetList);
+            String reversedIp = String.join(".", octetList);
+
+            // Append the "in-addr.arpa" domain.
+            qName = reversedIp + ".in-addr.arpa.";
+        }
         if (qName.endsWith(".")) {
             qName = qName.substring(0, qName.length() - 1);
         }

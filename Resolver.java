@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.util.regex.*;
 import java.util.Random;
 import java.util.Stack;
 
@@ -17,8 +16,8 @@ public class Resolver {
 
         try (DatagramSocket resolverClientSocket = new DatagramSocket(resolverPort)) {;
             byte[] receiveData = new byte[512];
-            System.out.println("Listening: ");
             while (true) {
+                System.out.println("Listening: ");
                 // network stack of the operating system takes care of the queuing process automatically.
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 resolverClientSocket.receive(receivePacket);
@@ -85,12 +84,40 @@ public class Resolver {
             String line;
 
             while ((line = reader.readLine()) != null) {
-                Matcher matcher = Pattern.compile("^(.+?)\\s+\\d+\\s+IN\\s+A\\s+(.+)$").matcher(line);
+                // Remove leading and trailing whitespace
+                line = line.trim();
 
-                if (matcher.matches()) {
-                    rootServers.push(matcher.group(2));
+                // Ignore empty lines
+                if (line.isEmpty()) {
+                    continue;
+                }
+
+                // Ignore lines starting with a semi-colon
+                if (line.startsWith(";")) {
+                    continue;
+                }
+
+                // Ignore lines starting with a full stop
+                if (line.startsWith(".")) {
+                    continue;
+                }
+
+                // Ignore lines containing "AAAA" records
+                if (line.contains("AAAA")) {
+                    continue;
+                }
+
+                // Split the line to get the IP address (assuming it's the last field)
+                String[] fields = line.split("\\s+");
+                if (fields.length >= 2) {
+                    String ip = fields[fields.length - 1];
+                    rootServers.push(ip);
                 }
             }
+        } catch (FileNotFoundException e) {
+            System.out.println("The file named.root was not found: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
         }
         return rootServers;
     }
@@ -139,7 +166,7 @@ public class Resolver {
             // check if theres cnames
             for (DNSResourceRecord answer : dnsResponse.answers) {
                 if (dnsResponse.questions.get(0).qType == 1 && answer.type == 5) {
-                    // if question is type and and answer is cname
+                    // if question is type a and answer is cname
                     // create a new query for the new name
                     // start search all over again from roots
                     String newQNAME = dnsResponse.extractDomainFromRData(answer.rdata);
@@ -241,12 +268,13 @@ public class Resolver {
         // convert the dns message to a byte array so we can create a new instance
         byte[] dnsMessageBytes = dnsMessage.toByteArray();
         DNSMessage dnsQuery = new DNSMessage(dnsMessageBytes);
+        qName = qName.replaceAll("\\.$", ""); // Removes trailing period
         dnsQuery.questions.get(0).qName = qName;
         return dnsQuery;
     }
 
     public static void usageMessage() {
-        System.err.println("Usage: resolver port timeout");
+        System.err.println("Usage: java Resolver port timeout");
     }
 
     private static DNSMessage constructDNSQuery(String name, int type) {

@@ -1,6 +1,3 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.*;
 import java.util.Random;
 
@@ -30,7 +27,6 @@ public class Client {
             InetAddress resolverAddress = InetAddress.getByName(resolverIP);
             DatagramPacket sendPacket = new DatagramPacket(dnsQueryBytes, dnsQueryBytes.length, resolverAddress, resolverPort);
 
-            long sendTime = System.currentTimeMillis();
             // Send the DNS query packet
             socket.send(sendPacket);
 
@@ -40,20 +36,11 @@ public class Client {
 
             // Wait for the response from the DNS resolver
             socket.receive(receivePacket);
-            long recieveTime = System.currentTimeMillis();
 
             byte[] dnsResponseBytes = receivePacket.getData();
 
             // Close the socket
             socket.close();
-
-            ////////////////////////////////////////////////////////////////////////////////
-            /////// PERFORMANCE REPORTING //////////////////////////////////////////////////
-            long resolutionTime = recieveTime - sendTime;
-            Client.performanceReport(name, resolutionTime);
-            /////////////////////////////////////////////////////////////////////////////////
-            // uncomment the above 2 lines when testing //
-            ////////////////////////////////////////////////////////////////////////////////
 
             DNSMessage dnsResponse = new DNSMessage(dnsResponseBytes);
 
@@ -68,22 +55,6 @@ public class Client {
             System.exit(1);
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    /////// PERFORMANCE REPORTING ///////////////////////////////////////////////////
-    public static void performanceReport(String domainName, long resolutionTime) {
-        // String fileName = "publicServerReportGoogle";
-        // String fileName = "publicServerReportCloudfare";
-        String fileName = "localResolverReport";
-        // uncommnet line above depending on test
-        try (PrintWriter file = new PrintWriter(new FileWriter(fileName, true))) {
-            file.println(domainName + " , " + resolutionTime);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-    ////////////////////////////////////////////////////////////////////////////////
 
     private static int getTypeAsInt(String type) {
         type = type.toLowerCase();
@@ -200,7 +171,7 @@ public class Client {
                     break;
                 case 12:
                     // type ptr
-                    // currently not supported
+                    System.out.println(Client.typeDomainAnswer(answer.rdata, dnsResponse));
                     break;
                 case 15:
                     // type mx
@@ -238,7 +209,6 @@ public class Client {
         Random randomGenerator = new Random();
         int queryID = randomGenerator.nextInt(65536); // Random 16 bit number for ID
 
-        // FOR PERFORMANCE REPORTING
         // (make sure true when testing public servers and false for using Resolver.java)
         boolean recursionDesired = false;
 
@@ -257,7 +227,7 @@ public class Client {
     }
 
     public static void usageMessage() {
-        System.err.println("Usage: client resolver_ip resolver_port name timeout type");
+        System.err.println("Usage: java Client resolver_ip resolver_port name timeout type");
     }
 
     public static String typeIPAnswer(byte[] rdata) {
