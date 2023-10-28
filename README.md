@@ -60,6 +60,7 @@ java Resolver 8080 10
 ## Important Note
 
 Before executing the commands, ensure all required dependencies are installed and the files are appropriately compiled.
+Also make sure Resolver is running before intiating Client requests.
 
 ## References
 
