@@ -15,7 +15,6 @@ This project provides a DNS resolver along with a client to handle DNS queries a
 
 ### Auxiliary Files
 
-- `mark_request.pdf`: A detailed PDF specification or guideline.
 - `named.root`: Contains the root DNS server information.
 - `resolvableDomains.txt`: A list of domains supported for resolution by this resolver.
 - `README.md`: This very documentation and usage guide.
